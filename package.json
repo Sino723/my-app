@@ -1,12 +1,12 @@
 {
   "name": "my-app",
   "version": "1.0.0",
-  "type": "module",
   "description": "",
   "main": "index.js",
   "scripts": {
     "start": "tsx index.ts",
-    "db:dev": "prisma dev"
+    "db:dev": "prisma dev",
+    "dev": "tsx --conditions=node --env-file=.env src/app.ts"
   },
   "keywords": [],
   "author": "",
@@ -15,7 +15,9 @@
     "@types/express": "^5.0.6",
     "@types/node": "^26.0.0",
     "prisma": "^7.8.0",
-    "tsx": "^4.22.4"
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
