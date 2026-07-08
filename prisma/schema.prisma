@@ -12,8 +12,40 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id   Int    @id @default(autoincrement())
-  name String
-  age Int?
+model Task {
+  id                Int   @id @default(autoincrement())
+  title             String
+  deadline          DateTime?
+  weight            Int 
+  is_completed      Boolean @default(false)
+  from_template_id  Int?
+  parent_id         Int?
+  parent            Task? @relation("TaskHierarchy", fields: [parent_id], references: [id])
+  children          Task[] @relation("TaskHierarchy")
+}
+
+model SchedulePattern {
+  id              Int     @id @default(autoincrement())
+  name            String
+  morning_start   String // "09:00"
+  morning_end     String
+  afternoon_start String
+  afternoon_end   String
+  evening_start   String
+  evening_end     String
+
+  weeklySchedules WeeklySchedule[]
+}
+
+model WeeklySchedule {
+  day_of_week Int @id
+  pattern_id  Int
+  pattern     SchedulePattern @relation(fields: [pattern_id], references: [id])
+}
+
+model Template {
+  id              Int @id @default(autoincrement())
+  title           String
+  default_weight  Int
+  category        String
 }
