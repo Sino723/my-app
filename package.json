@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "tsx index.ts",
+    "start": "tsx --conditions=node src/app.ts",
     "db:dev": "prisma dev",
     "dev": "tsx --conditions=node --env-file=.env src/app.ts"
   },
