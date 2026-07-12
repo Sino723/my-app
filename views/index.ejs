@@ -2,22 +2,29 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ユーザー名簿</title>
+  <title>タスク管理アプリ</title>
 </head>
 <body>
-  <h1>ユーザー一覧</h1>
-    <ul>
-        <% users.forEach(user => { %>
-            <li><%= user.name %> (<%= user.age ? user.age + '歳' : '年齢未設定' %>)</li>
-        <% }) %>
-    </ul>
+  <h1>タスク管理アプリ（爆速MVP版）</h1>
 
-  <h2>ユーザーを追加する</h2>
-    <form action="/users" method="post">
-        <input type="text" name="name" placeholder="名前" required>
-        <input type="number" name="age" placeholder="年齢">
-        <button type="submit">追加</button>
-    </form>
+  <!-- タスク登録フォーム -->
+  <form action="/tasks" method="POST">
+    <input type="text" name="title" placeholder="新しいタスクを入力" required>
+    <button type="submit">タスクを追加</button>
+  </form>
 
+  <hr>
+
+  <!-- タスク一覧表示 -->
+  <h2>今日のタスク</h2>
+  <ul>
+    <% if (tasks.length === 0) { %>
+      <li>タスクはまだありません。</li>
+    <% } else { %>
+      <% tasks.forEach(task => { %>
+        <li><%= task.title %></li>
+      <% }) %>
+    <% } %>
+  </ul>
 </body>
 </html>
