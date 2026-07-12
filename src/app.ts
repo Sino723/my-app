@@ -41,6 +41,7 @@ app.post("/tasks", async (req, res) => {
           // その場合は以下のように適当な初期値を足してください。
           // weight: 1, 
           // deadline: new Date(),
+          weight: 5
         },
       });
     }
