@@ -1,52 +1,62 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ジャンル別タスク一覧</title>
+  <title>Nautilus - Genres</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background-color: #f4f7f6; }
-    .genre-group { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .genre-title { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #17a2b8; padding-bottom: 10px; margin-bottom: 15px; }
+    body { font-family: 'Times New Roman', Times, serif; padding: 20px; background-color: #000538; color: #ffffff; }
+    h1.main-title { text-align: center; font-size: 3.5em; font-weight: normal; letter-spacing: 5px; margin-top: 20px; margin-bottom: 40px; color: #ffffff; }
+    h2 { color: #ffffff; border-bottom: 1px solid #4a6fa5; padding-bottom: 5px; font-weight: normal; }
+    
+    .genre-group { background: #23396d; border: 1px solid #4a6fa5; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    .genre-title { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #4a6fa5; padding-bottom: 10px; margin-bottom: 15px; }
+    
     .task-list { list-style: none; padding-left: 0; }
-    .task-item { padding: 8px; border-bottom: 1px dashed #eee; display: flex; align-items: center; }
+    .task-item { padding: 10px 8px; border-bottom: 1px dashed #4a6fa5; display: flex; align-items: center; }
     .task-item:last-child { border-bottom: none; }
-    .task-meta { font-size: 0.85em; color: #666; margin-left: 10px; }
-    .delete-btn { background: none; border: none; font-size: 1.2em; cursor: pointer; color: #dc3545; transition: 0.2s; }
-    .delete-btn:hover { transform: scale(1.2); }
+    .task-meta { font-size: 0.85em; color: #aaaaaa; margin-left: 10px; }
+    
+    .btn-secondary { padding: 8px 15px; background: #23396d; color: #ffffff; border: 1px solid #ffffff; border-radius: 4px; cursor: pointer; font-family: 'Times New Roman', Times, serif; transition: 0.2s; text-decoration: none; display: inline-block; }
+    .btn-secondary:hover { background: #ffffff; color: #000538; }
+    
+    .action-btn { background: none; border: none; font-size: 0.9em; cursor: pointer; transition: 0.2s; color: #aaaaaa; font-family: 'Times New Roman', Times, serif; text-decoration: underline; padding: 0 5px;}
+    .action-btn:hover { color: #ffffff; }
   </style>
 </head>
 <body>
-  <h1>🏷️ ジャンル別 タスク一覧</h1>
+  <h1 class="main-title">Nautilus</h1>
+  
   <div style="margin-bottom: 20px;">
-    <a href="/" style="padding: 10px 15px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">⬅ トップページに戻る</a>
+    <a href="/" class="btn-secondary">< Back to Top</a>
   </div>
 
+  <h2>Tasks by Genre</h2>
+
   <% if (genres.length === 0) { %>
-    <p style="color: #999;">登録されているジャンルはありません。</p>
+    <p style="color: #aaaaaa;">No genres registered.</p>
   <% } else { %>
     <% genres.forEach(genre => { %>
       <div class="genre-group">
         <div class="genre-title">
-          <h2 style="margin: 0; color: #17a2b8;">🏷️ <%= genre.title %></h2>
-          <!-- ジャンル自体の削除ボタン -->
-          <form action="/tasks/<%= genre.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('このジャンルを削除しますか？\n（※属しているタスクは「ジャンルなし」として残ります）');">
-            <button type="submit" class="delete-btn" title="ジャンルを削除">🗑️</button>
+          <h2 style="margin: 0; border: none;"><%= genre.title %></h2>
+          <form action="/tasks/<%= genre.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this genre?\n(Tasks in this genre will remain without a genre.)');">
+            <button type="submit" class="action-btn">Delete</button>
           </form>
         </div>
         
         <ul class="task-list">
           <% const tasksInGenre = tasksWithGenre.filter(t => t.from_template_id === genre.id); %>
           <% if (tasksInGenre.length === 0) { %>
-            <li style="color: #999; padding: 8px;">このジャンルに属するタスクはまだありません。</li>
+            <li style="color: #aaaaaa; padding: 8px;">No tasks in this genre.</li>
           <% } else { %>
             <% tasksInGenre.forEach(task => { %>
               <li class="task-item">
-                <span style="<%= task.is_completed ? 'text-decoration: line-through; opacity: 0.6;' : '' %>">
+                <span style="<%= task.is_completed ? 'text-decoration: line-through; opacity: 0.5;' : '' %>;">
                   <%= task.title %>
                 </span>
-                <span class="task-meta">
-                  (重さ: <%= task.weight %> 
-                  <% if (task.deadline) { %> | 期限: <%= new Date(task.deadline).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }) %><% } %>)
+                <span class="task-meta" style="<%= task.is_completed ? 'opacity: 0.5;' : '' %>">
+                  (Weight: <%= task.weight %> 
+                  <% if (task.deadline) { %> | Deadline: <%= new Date(task.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }) %><% } %>)
                 </span>
               </li>
             <% }) %>

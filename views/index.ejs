@@ -1,84 +1,97 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>タスク管理アプリ</title>
+  <title>Nautilus</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background-color: #f4f7f6; }
+    body { font-family: 'Times New Roman', Times, serif; padding: 20px; background-color: #000538; color: #ffffff; }
+    
+    h1.main-title { text-align: center; font-size: 3.5em; font-weight: normal; letter-spacing: 5px; margin-top: 20px; margin-bottom: 40px; color: #ffffff; }
+    h2 { color: #ffffff; border-bottom: 1px solid #4a6fa5; padding-bottom: 5px; font-weight: normal; }
+
+    .panel { background: #23396d; border: 1px solid #4a6fa5; border-radius: 8px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); margin-bottom: 20px; }
+    hr { border: none; border-top: 1px solid #4a6fa5; margin: 20px 0; }
+
+    input[type="text"], input[type="number"], select, input[type="datetime-local"] { 
+      background-color: #000538; color: #ffffff; border: 1px solid #4a6fa5; border-radius: 4px; padding: 8px; font-family: 'Times New Roman', Times, serif;
+    }
+    input[type="datetime-local"] { color-scheme: dark; }
+    
     .weight-options { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 15px; }
     .weight-options input[type="radio"] { display: none; }
-    .weight-options label { display: inline-block; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background-color: #fff; }
-    .weight-options input[type="radio"]:checked + label { background-color: #007bff; color: white; border-color: #007bff; }
+    .weight-options label { display: inline-block; padding: 8px 12px; border: 1px solid #4a6fa5; border-radius: 4px; cursor: pointer; background-color: #000538; color: #ffffff; transition: 0.3s; }
+    .weight-options input[type="radio"]:checked + label { background-color: #ffffff; color: #000538; border-color: #ffffff; font-weight: bold; }
+
+    .task-group { border: 1px solid #4a6fa5; border-radius: 8px; padding: 15px; background: #23396d; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
     .task-left { display: flex; align-items: center; }
-    input[type="checkbox"] { transform: scale(1.5); margin-right: 15px; cursor: pointer; }
-    .task-meta { font-size: 0.85em; color: #666; margin-top: 3px; }
-    .action-btn { background: none; border: none; font-size: 1.2em; cursor: pointer; transition: 0.2s; }
-    .action-btn:hover { transform: scale(1.2); }
-    .delete-btn { color: #dc3545; }
-    dialog::backdrop { background-color: rgba(0, 0, 0, 0.4); }
-    .task-group { border: 2px solid #ddd; border-radius: 8px; padding: 15px; background: #fff; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .completed-group { opacity: 0.6; }
-    .completed-text { text-decoration: line-through; }
-    .genre-badge { background: #17a2b8; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; margin-left: 8px; vertical-align: middle; white-space: nowrap; }
+    .task-meta { font-size: 0.85em; color: #aaaaaa; margin-top: 3px; }
+    
+    .completed-group { opacity: 0.5; }
+    .completed-text { text-decoration: line-through; color: #aaaaaa; }
+    .genre-badge { background: #000538; color: #ffffff; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; margin-left: 8px; vertical-align: middle; white-space: nowrap; border: 1px solid #ffffff; }
+
+    .btn-primary { padding: 10px 20px; background: #ffffff; color: #000538; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; font-family: 'Times New Roman', Times, serif; width: 100%; }
+    .btn-primary:hover { background: #cccccc; }
+    .btn-secondary { padding: 8px 15px; background: #23396d; color: #ffffff; border: 1px solid #ffffff; border-radius: 4px; cursor: pointer; font-family: 'Times New Roman', Times, serif; transition: 0.2s; text-decoration: none; display: inline-block; }
+    .btn-secondary:hover { background: #ffffff; color: #000538; }
+    
+    .action-btn { background: none; border: none; font-size: 0.9em; cursor: pointer; transition: 0.2s; color: #aaaaaa; font-family: 'Times New Roman', Times, serif; text-decoration: underline; padding: 0 5px;}
+    .action-btn:hover { color: #ffffff; }
+    
+    dialog { background: #23396d; color: #ffffff; border: 1px solid #ffffff; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); padding: 20px; width: 300px; }
+    dialog::backdrop { background-color: rgba(0, 5, 56, 0.8); }
+    dialog h3 { font-weight: normal; margin-top: 0; border-bottom: 1px solid #4a6fa5; padding-bottom: 5px; }
+
+    .matrix-box { position: relative; width: 100%; height: 500px; border: 2px solid #4a6fa5; background: #23396d; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    .matrix-line { position: absolute; border-color: #4a6fa5 !important; }
+    .matrix-label { font-weight: normal; color: #aaaaaa; z-index: 1; position: absolute; font-size: 0.9em;}
+    .matrix-tooltip { background: rgba(35, 57, 109, 0.95); border: 1px solid #ffffff; padding: 6px 10px; border-radius: 6px; font-size: 0.85em; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 5; position: absolute; top: -16px; color: #ffffff; }
+    .matrix-point { position: absolute; left: -8px; top: -8px; width: 16px; height: 16px; background-color: #ffffff; border: 2px solid #000538; border-radius: 50%; box-shadow: 0 0 8px rgba(255,255,255,0.5); z-index: 10; }
   </style>
 </head>
 <body>
-  <h1>📝 タスク管理アプリ</h1>
+  <h1 class="main-title">Nautilus</h1>
 
   <div style="display: flex; gap: 30px; align-items: flex-start;">
     
-    <!-- 左側カラム：タスク登録＆一覧 -->
+    <!-- 左側カラム -->
     <div style="flex: 1; max-width: 50%;">
       
-      <!-- ジャンル別のページへのリンク -->
-      <div style="margin-bottom: 15px;">
-        <a href="/genres" style="padding: 10px 15px; background: #17a2b8; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
-          📂 ジャンル別表示ページを見る
-        </a>
+      <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; gap: 15px;">
+          <label style="cursor: pointer;"><input type="radio" name="entry_type" value="task" checked onchange="toggleForm()"> Task</label>
+          <label style="cursor: pointer;"><input type="radio" name="entry_type" value="genre" onchange="toggleForm()"> Genre</label>
+        </div>
+        <a href="/genres" class="btn-secondary">Genres</a>
       </div>
 
-      <!-- 登録切り替えボタン -->
-      <div style="margin-bottom: 15px; display: flex; gap: 15px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
-        <label style="cursor: pointer; font-weight: bold;"><input type="radio" name="entry_type" value="task" checked onchange="toggleForm()"> 📝 タスク登録</label>
-        <label style="cursor: pointer; font-weight: bold;"><input type="radio" name="entry_type" value="genre" onchange="toggleForm()"> 🏷️ ジャンル登録</label>
-      </div>
-
-      <!-- 登録フォーム -->
-      <form action="/tasks" method="POST" style="background: #e9ecef; padding: 15px; border-radius: 8px;">
-        <!-- JSで操作する隠しフィールド -->
+      <form action="/tasks" method="POST" class="panel">
         <input type="hidden" name="is_genre" id="is_genre_input" value="false">
 
         <div style="margin-bottom: 10px;">
-          <input type="text" name="title" id="title_input" placeholder="新しいタスクを入力" required style="width: 80%; padding: 8px;">
+          <input type="text" name="title" id="title_input" placeholder="Enter new task" required style="width: 100%; box-sizing: border-box;">
         </div>
         
-        <!-- タスク用詳細設定エリア（ジャンル登録時は隠れる） -->
         <div id="task-details">
-          <div style="margin-bottom: 10px;">
-            <label>🏷️ ジャンル: 
-              <select name="from_template_id" style="padding: 5px;">
-                <option value="">(なし)</option>
-                <% genres.forEach(g => { %>
-                  <option value="<%= g.id %>"><%= g.title %></option>
-                <% }) %>
+          <div style="display: flex; gap: 15px; margin-bottom: 10px;">
+            <label style="flex: 1;">Genre: <br>
+              <select name="from_template_id" style="width: 100%; margin-top: 5px;">
+                <option value="">(None)</option>
+                <% genres.forEach(g => { %><option value="<%= g.id %>"><%= g.title %></option><% }) %>
+              </select>
+            </label>
+            <label style="flex: 1;">Parent: <br>
+              <select name="parent_id" style="width: 100%; margin-top: 5px;">
+                <option value="">(None / Self)</option>
+                <% allParentTasks.forEach(task => { %><option value="<%= task.id %>"><%= task.title %></option><% }) %>
               </select>
             </label>
           </div>
           <div style="margin-bottom: 10px;">
-            <label>📁 親タスク設定: 
-              <select name="parent_id" style="padding: 5px;">
-                <option value="">(なし・自身を親タスクにする)</option>
-                <% allParentTasks.forEach(task => { %>
-                  <option value="<%= task.id %>"><%= task.title %></option>
-                <% }) %>
-              </select>
-            </label>
-          </div>
-          <div style="margin-bottom: 10px;">
-            <label>⏰ 締め切り: <input type="datetime-local" name="deadline" style="padding: 5px;"></label>
+            <label>Deadline: <input type="datetime-local" name="deadline" style="margin-left: 10px;"></label>
           </div>
           <div>
-            <p style="margin: 0 0 5px 0;">🏋️ 重さ (1-10):</p>
+            <p style="margin: 0 0 5px 0;">Weight (1-10):</p>
             <div class="weight-options">
               <% for(let i=1; i<=10; i++) { %>
                 <input type="radio" id="weight<%= i %>" name="weight" value="<%= i %>" <%= i===1 ? 'checked' : '' %>>
@@ -87,18 +100,15 @@
             </div>
           </div>
         </div>
-        <button type="submit" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-          ➕ 追加する
-        </button>
+        <button type="submit" class="btn-primary">+ Add Task</button>
       </form>
 
       <hr>
 
-      <!-- 未完了タスク一覧表示 -->
-      <h2>未完了のタスク</h2>
+      <h2>Incomplete Tasks</h2>
       <div style="display: flex; flex-direction: column;">
         <% if (incompleteParentTasks.length === 0) { %>
-          <p style="color: #999;">タスクはすべて完了しています！🎉</p>
+          <p style="color: #aaaaaa;">No tasks available.</p>
         <% } else { %>
           <% incompleteParentTasks.forEach(parent => { %>
             <div class="task-group">
@@ -109,56 +119,53 @@
                       <input type="checkbox" onchange="this.form.submit()">
                     </form>
                   <% } else { %>
-                    <span style="font-size: 1.5em; margin-right: 15px;" title="子タスクを全て完了するとクリアされます">📁</span>
+                    <span style="color: #aaaaaa; margin-right: 15px; font-size: 0.8em;" title="Cleared when all subtasks are completed">[Auto]</span>
                   <% } %>
                   <div>
-                    <div style="font-size: 1.1em; font-weight: bold;">
+                    <div style="font-size: 1.1em;">
                       <%= parent.title %>
-                      <% if (parent.genreName) { %><span class="genre-badge">🏷️ <%= parent.genreName %></span><% } %>
+                      <% if (parent.genreName) { %><span class="genre-badge"><%= parent.genreName %></span><% } %>
                     </div>
                     <div class="task-meta">
-                      重さ: <%= parent.weight %> 
-                      <% if (parent.deadline) { %> | 期限: <%= new Date(parent.deadline).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }) %><% } %>
+                      Weight: <%= parent.weight %> 
+                      <% if (parent.deadline) { %> | Deadline: <%= new Date(parent.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }) %><% } %>
                     </div>
                   </div>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                  <button type="button" onclick="document.getElementById('edit-dialog-<%= parent.id %>').showModal()" class="action-btn" title="編集">✏️</button>
-                  <form action="/tasks/<%= parent.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('本当に削除しますか？\n※子タスクが存在する場合は一緒に削除されます。');">
-                    <button type="submit" class="action-btn delete-btn" title="削除">🗑️</button>
+                  <button type="button" onclick="document.getElementById('edit-dialog-<%= parent.id %>').showModal()" class="action-btn">Edit</button>
+                  <form action="/tasks/<%= parent.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this?');">
+                    <button type="submit" class="action-btn">Delete</button>
                   </form>
                 </div>
               </div>
 
-              <!-- 親用編集ポップアップ -->
-              <dialog id="edit-dialog-<%= parent.id %>" style="border: 1px solid #ccc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 300px;">
+              <dialog id="edit-dialog-<%= parent.id %>">
                 <form action="/tasks/<%= parent.id %>/edit" method="POST">
-                  <h3 style="margin-top: 0;">タスクを編集</h3>
-                  <div style="margin-bottom: 10px;"><input type="text" name="title" value="<%= parent.title %>" required style="width: 100%; padding: 8px; box-sizing: border-box;"></div>
+                  <h3>Edit Task</h3>
+                  <div style="margin-bottom: 10px;"><input type="text" name="title" value="<%= parent.title %>" required style="width: 100%; box-sizing: border-box;"></div>
                   <div style="margin-bottom: 10px;">
-                    <label>🏷️ ジャンル: 
-                      <select name="from_template_id" style="width: 100%; padding: 5px; box-sizing: border-box; margin-top: 5px;">
-                        <option value="">(なし)</option>
-                        <% genres.forEach(g => { %>
-                          <option value="<%= g.id %>" <%= parent.from_template_id === g.id ? 'selected' : '' %>><%= g.title %></option>
-                        <% }) %>
+                    <label>Genre: 
+                      <select name="from_template_id" style="width: 100%; box-sizing: border-box; margin-top: 5px;">
+                        <option value="">(None)</option>
+                        <% genres.forEach(g => { %><option value="<%= g.id %>" <%= parent.from_template_id === g.id ? 'selected' : '' %>><%= g.title %></option><% }) %>
                       </select>
                     </label>
                   </div>
                   <div style="margin-bottom: 10px;">
                     <% let parentDeadline = ''; if (parent.deadline) { const d = new Date(parent.deadline); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); parentDeadline = d.toISOString().slice(0, 16); } %>
-                    <label>⏰ 締め切り:<br><input type="datetime-local" name="deadline" value="<%= parentDeadline %>" style="width: 100%; padding: 5px; box-sizing: border-box; margin-top: 5px;"></label>
+                    <label>Deadline:<br><input type="datetime-local" name="deadline" value="<%= parentDeadline %>" style="width: 100%; box-sizing: border-box; margin-top: 5px;"></label>
                   </div>
-                  <div style="margin-bottom: 15px;"><label>🏋️ 重さ (1-10): <input type="number" name="weight" min="1" max="10" value="<%= parent.weight %>" style="width: 60px; padding: 5px;"></label></div>
+                  <div style="margin-bottom: 15px;"><label>Weight (1-10): <input type="number" name="weight" min="1" max="10" value="<%= parent.weight %>" style="width: 60px;"></label></div>
                   <div style="display: flex; justify-content: space-between;">
-                    <button type="button" onclick="document.getElementById('edit-dialog-<%= parent.id %>').close()" style="padding: 8px 15px; background: #ccc; border: none; border-radius: 4px; cursor: pointer;">キャンセル</button>
-                    <button type="submit" style="padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">保存</button>
+                    <button type="button" onclick="document.getElementById('edit-dialog-<%= parent.id %>').close()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary" style="width: auto;">Save</button>
                   </div>
                 </form>
               </dialog>
 
               <% if (parent.children.length > 0) { %>
-                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ccc; padding-left: 30px;">
+                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #4a6fa5; padding-left: 30px;">
                   <% parent.children.forEach(child => { %>
                     <div style="display: flex; align-items: center; justify-content: space-between; padding: 5px 0;">
                       <div class="task-left">
@@ -166,47 +173,44 @@
                           <input type="checkbox" <%= child.is_completed ? 'checked' : '' %> onchange="this.form.submit()">
                         </form>
                         <div>
-                          <div style="font-size: 1em; <%= child.is_completed ? 'text-decoration: line-through; opacity: 0.6;' : '' %>">
+                          <div style="font-size: 1em; <%= child.is_completed ? 'text-decoration: line-through; opacity: 0.5;' : '' %>">
                             <%= child.title %>
-                            <% if (child.genreName) { %><span class="genre-badge">🏷️ <%= child.genreName %></span><% } %>
+                            <% if (child.genreName) { %><span class="genre-badge"><%= child.genreName %></span><% } %>
                           </div>
-                          <div class="task-meta" style="<%= child.is_completed ? 'opacity: 0.6;' : '' %>">
-                            重さ: <%= child.weight %> 
-                            <% if (child.deadline) { %>| 期限: <%= new Date(child.deadline).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }) %><% } %>
+                          <div class="task-meta" style="<%= child.is_completed ? 'opacity: 0.5;' : '' %>">
+                            Weight: <%= child.weight %> 
+                            <% if (child.deadline) { %>| Deadline: <%= new Date(child.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }) %><% } %>
                           </div>
                         </div>
                       </div>
                       <div style="display: flex; gap: 8px;">
-                        <button type="button" onclick="document.getElementById('edit-dialog-<%= child.id %>').showModal()" class="action-btn" title="編集">✏️</button>
-                        <form action="/tasks/<%= child.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('本当に削除しますか？');">
-                          <button type="submit" class="action-btn delete-btn" title="削除">🗑️</button>
+                        <button type="button" onclick="document.getElementById('edit-dialog-<%= child.id %>').showModal()" class="action-btn">Edit</button>
+                        <form action="/tasks/<%= child.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this?');">
+                          <button type="submit" class="action-btn">Delete</button>
                         </form>
                       </div>
                     </div>
 
-                    <!-- 子用編集ポップアップ -->
-                    <dialog id="edit-dialog-<%= child.id %>" style="border: 1px solid #ccc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 300px;">
+                    <dialog id="edit-dialog-<%= child.id %>">
                       <form action="/tasks/<%= child.id %>/edit" method="POST">
-                        <h3 style="margin-top: 0;">タスクを編集</h3>
-                        <div style="margin-bottom: 10px;"><input type="text" name="title" value="<%= child.title %>" required style="width: 100%; padding: 8px; box-sizing: border-box;"></div>
+                        <h3>Edit Task</h3>
+                        <div style="margin-bottom: 10px;"><input type="text" name="title" value="<%= child.title %>" required style="width: 100%; box-sizing: border-box;"></div>
                         <div style="margin-bottom: 10px;">
-                          <label>🏷️ ジャンル: 
-                            <select name="from_template_id" style="width: 100%; padding: 5px; box-sizing: border-box; margin-top: 5px;">
-                              <option value="">(なし)</option>
-                              <% genres.forEach(g => { %>
-                                <option value="<%= g.id %>" <%= child.from_template_id === g.id ? 'selected' : '' %>><%= g.title %></option>
-                              <% }) %>
+                          <label>Genre: 
+                            <select name="from_template_id" style="width: 100%; box-sizing: border-box; margin-top: 5px;">
+                              <option value="">(None)</option>
+                              <% genres.forEach(g => { %><option value="<%= g.id %>" <%= child.from_template_id === g.id ? 'selected' : '' %>><%= g.title %></option><% }) %>
                             </select>
                           </label>
                         </div>
                         <div style="margin-bottom: 10px;">
                           <% let childDeadline = ''; if (child.deadline) { const d = new Date(child.deadline); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); childDeadline = d.toISOString().slice(0, 16); } %>
-                          <label>⏰ 締め切り:<br><input type="datetime-local" name="deadline" value="<%= childDeadline %>" style="width: 100%; padding: 5px; box-sizing: border-box; margin-top: 5px;"></label>
+                          <label>Deadline:<br><input type="datetime-local" name="deadline" value="<%= childDeadline %>" style="width: 100%; box-sizing: border-box; margin-top: 5px;"></label>
                         </div>
-                        <div style="margin-bottom: 15px;"><label>🏋️ 重さ (1-10): <input type="number" name="weight" min="1" max="10" value="<%= child.weight %>" style="width: 60px; padding: 5px;"></label></div>
+                        <div style="margin-bottom: 15px;"><label>Weight (1-10): <input type="number" name="weight" min="1" max="10" value="<%= child.weight %>" style="width: 60px;"></label></div>
                         <div style="display: flex; justify-content: space-between;">
-                          <button type="button" onclick="document.getElementById('edit-dialog-<%= child.id %>').close()" style="padding: 8px 15px; background: #ccc; border: none; border-radius: 4px; cursor: pointer;">キャンセル</button>
-                          <button type="submit" style="padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">保存</button>
+                          <button type="button" onclick="document.getElementById('edit-dialog-<%= child.id %>').close()" class="btn-secondary">Cancel</button>
+                          <button type="submit" class="btn-primary" style="width: auto;">Save</button>
                         </div>
                       </form>
                     </dialog>
@@ -218,9 +222,8 @@
         <% } %>
       </div>
 
-      <!-- 完了済みタスクの表示 -->
-      <button onclick="toggleCompletedTasks()" style="margin: 15px 0 10px 0; padding: 8px 15px; border-radius: 4px; cursor: pointer; background: #dee2e6; border: 1px solid #ccc;">
-        👀 完了したタスクを表示 / 非表示
+      <button onclick="toggleCompletedTasks()" class="btn-secondary" style="margin: 15px 0 10px 0;">
+        Toggle Completed Tasks
       </button>
 
       <div id="completed-tasks-container" style="display: none;">
@@ -234,22 +237,22 @@
                       <input type="checkbox" checked onchange="this.form.submit()">
                     </form>
                   <% } else { %>
-                    <span style="font-size: 1.5em; margin-right: 15px;">📁</span>
+                    <span style="color: #aaaaaa; margin-right: 15px; font-size: 0.8em;">[Auto]</span>
                   <% } %>
                   <div>
-                    <div class="completed-text" style="font-size: 1.1em; font-weight: bold;">
+                    <div class="completed-text" style="font-size: 1.1em;">
                       <%= parent.title %>
-                      <% if (parent.genreName) { %><span class="genre-badge">🏷️ <%= parent.genreName %></span><% } %>
+                      <% if (parent.genreName) { %><span class="genre-badge"><%= parent.genreName %></span><% } %>
                     </div>
                   </div>
                 </div>
-                <form action="/tasks/<%= parent.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('本当に削除しますか？');">
-                  <button type="submit" class="action-btn delete-btn" title="削除">🗑️</button>
+                <form action="/tasks/<%= parent.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this?');">
+                  <button type="submit" class="action-btn">Delete</button>
                 </form>
               </div>
 
               <% if (parent.children.length > 0) { %>
-                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ccc; padding-left: 30px;">
+                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #4a6fa5; padding-left: 30px;">
                   <% parent.children.forEach(child => { %>
                     <div style="display: flex; align-items: center; justify-content: space-between; padding: 5px 0;">
                       <div class="task-left">
@@ -259,12 +262,12 @@
                         <div>
                           <div class="completed-text" style="font-size: 1em;">
                             <%= child.title %>
-                            <% if (child.genreName) { %><span class="genre-badge">🏷️ <%= child.genreName %></span><% } %>
+                            <% if (child.genreName) { %><span class="genre-badge"><%= child.genreName %></span><% } %>
                           </div>
                         </div>
                       </div>
-                      <form action="/tasks/<%= child.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('本当に削除しますか？');">
-                        <button type="submit" class="action-btn delete-btn" title="削除">🗑️</button>
+                      <form action="/tasks/<%= child.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this?');">
+                        <button type="submit" class="action-btn">Delete</button>
                       </form>
                     </div>
                   <% }) %>
@@ -276,36 +279,35 @@
       </div>
     </div> <!-- 左側カラム終了 -->
 
-    <!-- 右側カラム：重要度・緊急度マトリックス -->
+    <!-- 右側カラム：マトリックス -->
     <div style="flex: 1; position: sticky; top: 20px;">
-      <h2>📊 重要度・緊急度マトリックス</h2>
+      <h2>Priority Matrix</h2>
       
-      <div style="position: relative; width: 100%; height: 500px; border: 2px solid #555; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+      <div class="matrix-box">
         <% matrixTicks.forEach(tick => { %>
-          <div style="position: absolute; left: calc(<%= tick.ratio * 85 %>% + 20px); top: 0; height: 100%; border-left: 1px dashed #f0f0f0;"></div>
-          <div style="position: absolute; left: calc(<%= tick.ratio * 85 %>% + 20px); bottom: 5px; font-size: 0.75em; color: #aaa; transform: translateX(-50%);"><%= tick.label %></div>
+          <div class="matrix-line" style="left: calc(<%= tick.ratio * 85 %>% + 20px); top: 0; height: 100%; border-left: 1px dashed #4a6fa5;"></div>
+          <div style="position: absolute; left: calc(<%= tick.ratio * 85 %>% + 20px); bottom: 5px; font-size: 0.75em; color: #aaaaaa; transform: translateX(-50%);"><%= tick.label.replace('日', 'd') %></div>
         <% }) %>
-        <div style="position: absolute; left: 0; bottom: 50%; width: 100%; border-bottom: 2px solid #f8f9fa;"></div>
-        <div style="position: absolute; left: 50%; bottom: 0; height: 100%; border-left: 2px solid #f8f9fa;"></div>
-        <div style="position: absolute; left: 50%; top: 10px; font-weight: bold; color: #999; transform: translateX(-50%); z-index: 1;">⬆️ 重い</div>
-        <div style="position: absolute; left: 50%; bottom: 25px; font-weight: bold; color: #999; transform: translateX(-50%); z-index: 1;">⬇️ 軽い</div>
-        <div style="position: absolute; left: 10px; top: 50%; font-weight: bold; color: #999; transform: translateY(-50%); z-index: 1;">⬅️ 緊急</div>
-        <div style="position: absolute; right: 10px; top: 50%; font-weight: bold; color: #999; transform: translateY(-50%); z-index: 1;">余裕 ➡️</div>
+        
+        <div class="matrix-line" style="left: 0; bottom: 50%; width: 100%; border-bottom: 2px solid #4a6fa5;"></div>
+        <div class="matrix-line" style="left: 50%; bottom: 0; height: 100%; border-left: 2px solid #4a6fa5;"></div>
+        
+        <div class="matrix-label" style="left: 50%; top: 10px; transform: translateX(-50%);">High Weight</div>
+        <div class="matrix-label" style="left: 50%; bottom: 25px; transform: translateX(-50%);">Low Weight</div>
+        <div class="matrix-label" style="left: 10px; top: 50%; transform: translateY(-50%);">Urgent</div>
+        <div class="matrix-label" style="right: 10px; top: 50%; transform: translateY(-50%);">Not Urgent</div>
 
         <% matrixTasks.forEach(task => { %>
           <div style="position: absolute; left: calc(<%= task.x %>% + 20px); bottom: calc(<%= task.y %>% + 20px);">
-            <div style="position: absolute; left: -8px; top: -8px; width: 16px; height: 16px; background-color: #e83e8c; border: 2px solid white; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 10;"></div>
+            <div class="matrix-point"></div>
             
-            <% 
-              const boxStyle = "background: rgba(255, 255, 255, 0.95); border: 1px solid #ccc; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 5; position: absolute; top: -16px;";
-              const positionStyle = task.timeRatio > 0.5 ? "right: 12px;" : "left: 12px;";
-            %>
-            <div style="<%= boxStyle %> <%= positionStyle %>">
+            <% const positionStyle = task.timeRatio > 0.5 ? "right: 12px;" : "left: 12px;"; %>
+            <div class="matrix-tooltip" style="<%= positionStyle %>">
               <strong><%= task.title %></strong>
-              <% if (task.genreName) { %><span class="genre-badge">🏷️ <%= task.genreName %></span><% } %>
+              <% if (task.genreName) { %><span class="genre-badge"><%= task.genreName %></span><% } %>
               <br>
-              <span style="color: #d9534f; font-weight: bold;">
-                <%= new Date(task.deadline).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }) %>
+              <span style="color: #aaaaaa; font-size: 0.9em;">
+                <%= new Date(task.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }) %>
               </span>
             </div>
           </div>
@@ -321,7 +323,6 @@
       container.style.display = container.style.display === 'none' ? 'block' : 'none';
     }
 
-    // ジャンル登録とタスク登録のフォーム切り替え
     function toggleForm() {
       const type = document.querySelector('input[name="entry_type"]:checked').value;
       const details = document.getElementById('task-details');
@@ -329,13 +330,13 @@
       const titleInput = document.getElementById('title_input');
       
       if (type === 'genre') {
-        details.style.display = 'none'; // 重さ・期限などを隠す
+        details.style.display = 'none';
         isGenreInput.value = 'true';
-        titleInput.placeholder = '新しいジャンル名を入力';
+        titleInput.placeholder = 'Enter new genre';
       } else {
-        details.style.display = 'block'; // 重さ・期限などを表示
+        details.style.display = 'block';
         isGenreInput.value = 'false';
-        titleInput.placeholder = '新しいタスクを入力';
+        titleInput.placeholder = 'Enter new task';
       }
     }
   </script>
