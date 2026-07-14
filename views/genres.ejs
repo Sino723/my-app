@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ジャンル別タスク一覧</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background-color: #f4f7f6; }
+    .genre-group { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .genre-title { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #17a2b8; padding-bottom: 10px; margin-bottom: 15px; }
+    .task-list { list-style: none; padding-left: 0; }
+    .task-item { padding: 8px; border-bottom: 1px dashed #eee; display: flex; align-items: center; }
+    .task-item:last-child { border-bottom: none; }
+    .task-meta { font-size: 0.85em; color: #666; margin-left: 10px; }
+    .delete-btn { background: none; border: none; font-size: 1.2em; cursor: pointer; color: #dc3545; transition: 0.2s; }
+    .delete-btn:hover { transform: scale(1.2); }
+  </style>
+</head>
+<body>
+  <h1>🏷️ ジャンル別 タスク一覧</h1>
+  <div style="margin-bottom: 20px;">
+    <a href="/" style="padding: 10px 15px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">⬅ トップページに戻る</a>
+  </div>
+
+  <% if (genres.length === 0) { %>
+    <p style="color: #999;">登録されているジャンルはありません。</p>
+  <% } else { %>
+    <% genres.forEach(genre => { %>
+      <div class="genre-group">
+        <div class="genre-title">
+          <h2 style="margin: 0; color: #17a2b8;">🏷️ <%= genre.title %></h2>
+          <!-- ジャンル自体の削除ボタン -->
+          <form action="/tasks/<%= genre.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('このジャンルを削除しますか？\n（※属しているタスクは「ジャンルなし」として残ります）');">
+            <button type="submit" class="delete-btn" title="ジャンルを削除">🗑️</button>
+          </form>
+        </div>
+        
+        <ul class="task-list">
+          <% const tasksInGenre = tasksWithGenre.filter(t => t.from_template_id === genre.id); %>
+          <% if (tasksInGenre.length === 0) { %>
+            <li style="color: #999; padding: 8px;">このジャンルに属するタスクはまだありません。</li>
+          <% } else { %>
+            <% tasksInGenre.forEach(task => { %>
+              <li class="task-item">
+                <span style="<%= task.is_completed ? 'text-decoration: line-through; opacity: 0.6;' : '' %>">
+                  <%= task.title %>
+                </span>
+                <span class="task-meta">
+                  (重さ: <%= task.weight %> 
+                  <% if (task.deadline) { %> | 期限: <%= new Date(task.deadline).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }) %><% } %>)
+                </span>
+              </li>
+            <% }) %>
+          <% } %>
+        </ul>
+      </div>
+    <% }) %>
+  <% } %>
+</body>
+</html>
