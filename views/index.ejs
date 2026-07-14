@@ -3,28 +3,186 @@
 <head>
   <meta charset="UTF-8">
   <title>タスク管理アプリ</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background-color: #f4f7f6; }
+    
+    .weight-options { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 15px; }
+    .weight-options input[type="radio"] { display: none; }
+    .weight-options label {
+      display: inline-block; padding: 8px 12px;
+      border: 1px solid #ccc; border-radius: 4px;
+      cursor: pointer; background-color: #fff;
+    }
+    .weight-options input[type="radio"]:checked + label {
+      background-color: #007bff; color: white; border-color: #007bff;
+    }
+
+    .task-item {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px; padding: 10px; border-bottom: 1px solid #ddd; background: #fff; border-radius: 4px;
+    }
+    .task-left { display: flex; align-items: center; }
+    .task-item input[type="checkbox"] { transform: scale(1.5); margin-right: 15px; cursor: pointer; }
+    .task-meta { font-size: 0.85em; color: #666; margin-top: 3px; }
+    
+    .completed-task { opacity: 0.6; }
+    .completed-task .task-title { text-decoration: line-through; }
+    
+    .delete-btn { background: none; border: none; font-size: 1.2em; cursor: pointer; color: #dc3545; transition: 0.2s; }
+    .delete-btn:hover { transform: scale(1.2); }
+  </style>
 </head>
 <body>
-  <h1>タスク管理アプリ（爆速MVP版）</h1>
+  <h1>📝 タスク管理アプリ</h1>
+  <div style="margin-bottom: 20px;">
+    <a href="/hierarchy" style="padding: 10px 15px; background: #17a2b8; color: white; text-decoration: none; border-radius: 4px;">
+      📂 階層表示ページを見る
+    </a>
+  </div>
 
-  <!-- タスク登録フォーム -->
-  <form action="/tasks" method="POST">
-    <input type="text" name="title" placeholder="新しいタスクを入力" required>
-    <button type="submit">タスクを追加</button>
-  </form>
+  <!-- 全体を左右に分けるコンテナ -->
+  <div style="display: flex; gap: 30px; align-items: flex-start;">
+    
+    <!-- 左側カラム：タスク登録＆一覧（幅の半分を使用） -->
+    <div style="flex: 1; max-width: 50%;">
+      <!-- タスク登録フォーム -->
+      <form action="/tasks" method="POST" style="background: #e9ecef; padding: 15px; border-radius: 8px;">
+        <div style="margin-bottom: 10px;">
+          <input type="text" name="title" placeholder="新しいタスクを入力" required style="width: 80%; padding: 8px;">
+        </div>
+        <div style="margin-bottom: 10px;">
+          <label>📁 親タスク設定: 
+            <select name="parent_id" style="padding: 5px;">
+              <option value="">(なし・自身を親タスクにする)</option>
+              <% allTasks.forEach(task => { %>
+                <option value="<%= task.id %>"><%= task.title %></option>
+              <% }) %>
+            </select>
+          </label>
+        </div>
+        <div style="margin-bottom: 10px;">
+          <label>⏰ 締め切り: <input type="datetime-local" name="deadline" style="padding: 5px;"></label>
+        </div>
+        <div>
+          <p style="margin: 0 0 5px 0;">🏋️ 重さ (1-10):</p>
+          <div class="weight-options">
+            <% for(let i=1; i<=10; i++) { %>
+              <input type="radio" id="weight<%= i %>" name="weight" value="<%= i %>" <%= i===1 ? 'checked' : '' %>>
+              <label for="weight<%= i %>"><%= i %></label>
+            <% } %>
+          </div>
+        </div>
+        <button type="submit" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+          ➕ タスクを追加
+        </button>
+      </form>
 
-  <hr>
+      <hr>
 
-  <!-- タスク一覧表示 -->
-  <h2>今日のタスク</h2>
-  <ul>
-    <% if (tasks.length === 0) { %>
-      <li>タスクはまだありません。</li>
-    <% } else { %>
-      <% tasks.forEach(task => { %>
-        <li><%= task.title %></li>
-      <% }) %>
-    <% } %>
-  </ul>
+      <!-- 未完了タスク一覧表示 -->
+      <h2>未完了のタスク</h2>
+      <ul style="list-style: none; padding-left: 0;">
+        <% if (incompleteTasks.length === 0) { %>
+          <li style="color: #999;">タスクはすべて完了しています！🎉</li>
+        <% } else { %>
+          <% incompleteTasks.forEach(task => { %>
+            <li class="task-item">
+              <div class="task-left">
+                <form action="/tasks/<%= task.id %>/toggle" method="POST" style="margin: 0;">
+                  <input type="checkbox" onchange="this.form.submit()">
+                </form>
+                <div>
+                  <div class="task-title" style="font-size: 1.1em; font-weight: bold;"><%= task.title %></div>
+                  <div class="task-meta">
+                    重さ: <%= task.weight %> 
+                    <% if (task.deadline) { %>
+                      | 期限: <%= new Date(task.deadline).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }) %>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+              <form action="/tasks/<%= task.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('本当に削除しますか？');">
+                <button type="submit" class="delete-btn" title="削除">🗑️</button>
+              </form>
+            </li>
+          <% }) %>
+        <% } %>
+      </ul>
+
+      <!-- 完了済みタスクの表示・非表示ボタン -->
+      <button onclick="toggleCompletedTasks()" style="margin-bottom: 10px; padding: 8px 15px; border-radius: 4px; cursor: pointer; background: #dee2e6; border: 1px solid #ccc;">
+        👀 完了したタスクを表示 / 非表示
+      </button>
+
+      <div id="completed-tasks-container" style="display: none;">
+        <ul style="list-style: none; padding-left: 0;">
+          <% completedTasks.forEach(task => { %>
+            <li class="task-item completed-task">
+              <div class="task-left">
+                <form action="/tasks/<%= task.id %>/toggle" method="POST" style="margin: 0;">
+                  <input type="checkbox" checked onchange="this.form.submit()">
+                </form>
+                <div>
+                  <div class="task-title" style="font-size: 1.1em; font-weight: bold;"><%= task.title %></div>
+                </div>
+              </div>
+              <form action="/tasks/<%= task.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('本当に削除しますか？');">
+                <button type="submit" class="delete-btn" title="削除">🗑️</button>
+              </form>
+            </li>
+          <% }) %>
+        </ul>
+      </div>
+    </div> <!-- 左側カラム終了 -->
+
+    <!-- 右側カラム：重要度・緊急度マトリックス -->
+    <div style="flex: 1; position: sticky; top: 20px;">
+      <h2>📊 重要度・緊急度マトリックス</h2>
+      
+      <!-- グラフの枠 -->
+      <div style="position: relative; width: 100%; height: 500px; border: 2px solid #555; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        
+        <!-- 軸の補助線とラベル -->
+        <div style="position: absolute; left: 0; bottom: 50%; width: 100%; border-bottom: 1px dashed #ddd;"></div>
+        <div style="position: absolute; left: 50%; bottom: 0; height: 100%; border-left: 1px dashed #ddd;"></div>
+        <div style="position: absolute; left: 10px; top: 10px; font-weight: bold; color: #999;">重い ⬆️</div>
+        <div style="position: absolute; left: 10px; bottom: 10px; font-weight: bold; color: #999;">⬇️ 軽い / 緊急 ⬅️</div>
+        <div style="position: absolute; right: 10px; bottom: 10px; font-weight: bold; color: #999;">➡️ 余裕</div>
+
+        <!-- app.tsで計算した座標を使ってタスクをプロット -->
+        <% matrixTasks.forEach(task => { %>
+          <!-- x, y 座標を bottom と left に指定して配置 -->
+          <div style="position: absolute; left: calc(<%= task.x %>% + 20px); bottom: calc(<%= task.y %>% + 20px); display: flex; align-items: center; gap: 8px;">
+            <!-- プロットの赤い点 -->
+            <div style="width: 16px; height: 16px; background-color: #e83e8c; border: 2px solid white; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
+            
+            <!-- 脇に添える吹き出し（タイトルと期限） -->
+            <div style="background: rgba(255, 255, 255, 0.95); border: 1px solid #ccc; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <strong><%= task.title %></strong><br>
+              <span style="color: #d9534f; font-weight: bold;">
+                <%= new Date(task.deadline).toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }) %>
+              </span>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+      <p style="font-size: 0.8em; color: #666; margin-top: 10px;">
+        ※縦軸はタスクの重さ、横軸は期限までの残り時間（最も余裕があるタスクを右端として自動正規化）を表しています。<br>
+        左上にあるタスクほど「重くて緊急」です。
+      </p>
+    </div> <!-- 右側カラム終了 -->
+
+  </div> <!-- 左右分割コンテナ終了 -->
+
+  <script>
+    function toggleCompletedTasks() {
+      const container = document.getElementById('completed-tasks-container');
+      if (container.style.display === 'none') {
+        container.style.display = 'block';
+      } else {
+        container.style.display = 'none';
+      }
+    }
+  </script>
 </body>
 </html>

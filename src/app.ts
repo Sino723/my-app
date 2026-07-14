@@ -6,49 +6,131 @@ import { PrismaClient } from "@prisma/client";
 const app = express();
 const port = 3000;
 
-// 1. DBアダプターの設定（前回成功した接続設定です）
 const connectionString = process.env.DATABASE_URL;
-const pool = new Pool({ connectionString });
+const pool = new Pool({ 
+  connectionString: connectionString,
+  ssl: { rejectUnauthorized: false }
+});
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-// 2. フォームからのデータを受け取る設定と、HTMLを描画するエンジンの設定
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 app.set("views", "./views");
 
-// 3. 【機能1】トップページ：タスクの一覧を表示する（GET /）
+// トップページ（マトリックス用の座標計算を追加！）
 app.get("/", async (req, res) => {
   try {
-    const tasks = await prisma.task.findMany(); // DBからタスクを全部取得
-    res.render("index", { tasks: tasks });      // index.ejs に渡して表示
+    const incompleteTasks = await prisma.task.findMany({
+      where: { is_completed: false },
+      orderBy: { id: 'desc' }
+    });
+    const completedTasks = await prisma.task.findMany({
+      where: { is_completed: true },
+      orderBy: { id: 'desc' }
+    });
+
+    // --- マトリックス用の計算ロジック ---
+    const now = new Date().getTime();
+    
+    // 1. 期限が設定されている未完了タスクを抽出して残り時間を計算
+    let matrixTasks = incompleteTasks
+      .filter(t => t.deadline) 
+      .map(t => {
+        // 期限切れは0とする
+        const timeLeft = Math.max(0, t.deadline!.getTime() - now);
+        return { ...t, timeLeft: timeLeft };
+      });
+
+    // 2. 最も残り時間が大きいタスクの時間を取得（分母にするため）
+    // （※タスクがない時の0除算エラーを防ぐため最低でも1にする）
+    const maxTimeLeft = Math.max(...matrixTasks.map(t => t.timeLeft), 1);
+
+    // 3. 画面の縦横のパーセンテージ(X, Y座標)を計算して付与
+    const matrixTasksWithPosition = matrixTasks.map(t => {
+      return {
+        ...t,
+        // X軸(横): 残り時間（緊急なものほど左の0に近づく。端に行きすぎないよう最大85%）
+        x: (t.timeLeft / maxTimeLeft) * 85, 
+        // Y軸(縦): 重さ（1〜10の値を割合に。端に行きすぎないよう最大85%）
+        y: (t.weight / 10) * 85 
+      };
+    });
+
+    res.render("index", { 
+        incompleteTasks: incompleteTasks,
+        completedTasks: completedTasks,
+        allTasks: incompleteTasks,
+        matrixTasks: matrixTasksWithPosition // 計算したデータを画面に渡す！
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send("エラーが発生しました");
   }
 });
 
-// 4. 【機能2】タスクの登録処理（POST /tasks）
+// 新規登録
 app.post("/tasks", async (req, res) => {
   try {
-    const { title } = req.body;
+    const { title, deadline, weight, parent_id } = req.body;
     if (title) {
-      // DBにタスクを新規作成
       await prisma.task.create({
         data: {
           title: title,
-          // ※もしschema.prismaでweight等が「必須」になっている場合はエラーになる可能性があります。
-          // その場合は以下のように適当な初期値を足してください。
-          // weight: 1, 
-          // deadline: new Date(),
-          weight: 5
+          deadline: deadline ? new Date(deadline) : null,
+          weight: weight ? parseInt(weight, 10) : 1, 
+          parent_id: parent_id ? parseInt(parent_id, 10) : null 
         },
       });
     }
-    res.redirect("/"); // 登録したらトップページに戻る
+    res.redirect("/");
   } catch (error) {
     console.error(error);
-    res.status(500).send("登録に失敗しました（※schema.prismaの必須項目が足りない可能性があります）");
+    res.status(500).send("登録に失敗しました");
+  }
+});
+
+// 階層表示ページ
+app.get("/hierarchy", async (req, res) => {
+  try {
+    const parentTasks = await prisma.task.findMany({
+      where: { parent_id: null },
+      include: { children: true },
+      orderBy: { id: 'desc' }
+    });
+    res.render("hierarchy", { parentTasks: parentTasks });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("エラーが発生しました");
+  }
+});
+
+// 完了トグルと削除
+app.post("/tasks/:id/toggle", async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.id, 10);
+    const task = await prisma.task.findUnique({ where: { id: taskId } });
+    if (task) {
+        await prisma.task.update({
+          where: { id: taskId },
+          data: { is_completed: !task.is_completed }
+        });
+    }
+    res.redirect("/");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("更新に失敗しました");
+  }
+});
+
+app.post("/tasks/:id/delete", async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.id, 10);
+    await prisma.task.delete({ where: { id: taskId } });
+    res.redirect("/"); 
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("削除に失敗しました");
   }
 });
 

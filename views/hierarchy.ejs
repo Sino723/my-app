@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>タスク階層表示</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .parent-task { font-size: 1.2em; font-weight: bold; margin-top: 15px; background: #f0f8ff; padding: 10px; border-radius: 5px; }
+    .child-list { list-style-type: none; padding-left: 20px; margin-top: 10px; }
+    .child-task { font-size: 0.9em; font-weight: normal; margin-bottom: 5px; padding: 5px; border-left: 3px solid #17a2b8; background: #fdfdfd; }
+    .task-meta { font-size: 0.8em; color: #666; font-weight: normal; }
+  </style>
+</head>
+<body>
+  <h1>📂 タスク階層表示</h1>
+  <a href="/">⬅ トップページ（リスト表示）に戻る</a>
+  <hr>
+
+  <ul style="list-style: none; padding: 0;">
+    <% if (parentTasks.length === 0) { %>
+      <li style="color: #999;">タスクがありません。</li>
+    <% } else { %>
+      <% parentTasks.forEach(parent => { %>
+        <li class="parent-task">
+          <%= parent.title %> <span class="task-meta">(重さ: <%= parent.weight %>)</span>
+          
+          <!-- 子タスクのループ表示 -->
+          <% if (parent.children && parent.children.length > 0) { %>
+            <ul class="child-list">
+              <% parent.children.forEach(child => { %>
+                <li class="child-task">
+                  ↳ <%= child.title %> <span class="task-meta">(重さ: <%= child.weight %>)</span>
+                </li>
+              <% }) %>
+            </ul>
+          <% } %>
+        </li>
+      <% }) %>
+    <% } %>
+  </ul>
+</body>
+</html>
